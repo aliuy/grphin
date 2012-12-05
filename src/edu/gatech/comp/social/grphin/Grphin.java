@@ -26,10 +26,12 @@ public class Grphin {
   // The minimum number of employees needed in order to output a company or
   // edge.
   private final static int THRESHOLD = 2;
+  // Debug Mode (1 = Suggest normalized company names)
+  private final static boolean DEBUG = false;
 
   // Candidate company names to be normalized.
-  public static Set<String> NORMAL_CANDIDATES = new HashSet<String>();
-  // Change this to your output file.
+  private static Set<String> NORMAL_CANDIDATES = new HashSet<String>();
+  // The output file for normalized company name suggestions.
   private final static String NORMAL_OUTPUT = "C:\\Users\\andrew\\Desktop\\normal.txt";
 
   /**
@@ -55,15 +57,18 @@ public class Grphin {
       e.printStackTrace();
     }
 
-    // Output Normal File
-    try {
-      FileWriter out = new FileWriter(NORMAL_OUTPUT);
-      for (String normal : NORMAL_CANDIDATES) {
-        out.write(normal + "\n");
+    if (DEBUG) {
+      System.out.println("Normalized Company Name Suggestions Outputting to " + NORMAL_OUTPUT);
+      // Output Normal File
+      try {
+        FileWriter out = new FileWriter(NORMAL_OUTPUT);
+        for (String normal : NORMAL_CANDIDATES) {
+          out.write(normal + "\n");
+        }
+        out.close();
+      } catch (IOException e) {
+        e.printStackTrace();
       }
-      out.close();
-    } catch (IOException e) {
-      e.printStackTrace();
     }
 
     timer = (System.currentTimeMillis() - timer) / 1000;
@@ -217,18 +222,18 @@ public class Grphin {
       Integer edgeSize = edges.get(e).size();
       // Skip edges that have too few employees (uninteresting).
       if (c != null && edgeSize > THRESHOLD) {
-
-        // Add normalization candidates as needed.
-        if (e.destination.contains(e.source) || e.source.contains(e.destination)) {
-          if (e.source.length() < e.destination.length()) {
-            NORMAL_CANDIDATES.add("normalizedNames.put(\"" + e.destination + "\", \"" + e.source
-                + "\");");
-          } else {
-            NORMAL_CANDIDATES.add("normalizedNames.put(\"" + e.source + "\", \"" + e.destination
-                + "\");");
+        if (DEBUG) {
+          // Add normalization candidates as needed.
+          if (e.destination.contains(e.source) || e.source.contains(e.destination)) {
+            if (e.source.length() < e.destination.length()) {
+              NORMAL_CANDIDATES.add("normalizedNames.put(\"" + e.destination + "\", \"" + e.source
+                  + "\");");
+            } else {
+              NORMAL_CANDIDATES.add("normalizedNames.put(\"" + e.source + "\", \"" + e.destination
+                  + "\");");
+            }
           }
         }
-
         c.incomingEdges.put(e.source, edgeSize);
       }
     }
