@@ -25,9 +25,9 @@ public class Grphin {
   private final static String OUTPUT = "C:\\Users\\andrew\\Desktop\\jsonOutput.json";
   // The minimum number of employees needed in order to output a company or
   // edge.
-  private final static int THRESHOLD = 10;
+  private final static int THRESHOLD = 5;
   // Debug Mode (1 = Suggest normalized company names)
-  private final static boolean DEBUG = true;
+  private final static boolean DEBUG = false;
 
   // Candidate company names to be normalized.
   private static Set<String> NORMAL_CANDIDATES = new HashSet<String>();
@@ -254,12 +254,15 @@ public class Grphin {
         JsonObject companyJson = new JsonObject();
         companyJson.addProperty("company-name", c.name);
         JsonArray incoming = new JsonArray();
+        int totalIncoming = 0;
         for (String in : c.incomingEdges.keySet()) {
           JsonObject inCompany = new JsonObject();
           inCompany.addProperty("in-company", in);
           inCompany.addProperty("count", c.incomingEdges.get(in));
+          totalIncoming += c.incomingEdges.get(in).intValue();
           incoming.add(inCompany);
         }
+        companyJson.addProperty("strength", totalIncoming);
         companyJson.add("incoming", incoming);
         toRet.add(companyJson);
       }
