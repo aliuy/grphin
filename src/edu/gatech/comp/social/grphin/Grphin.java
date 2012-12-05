@@ -25,9 +25,9 @@ public class Grphin {
   private final static String OUTPUT = "C:\\Users\\andrew\\Desktop\\jsonOutput.json";
   // The minimum number of employees needed in order to output a company or
   // edge.
-  private final static int THRESHOLD = 2;
+  private final static int THRESHOLD = 10;
   // Debug Mode (1 = Suggest normalized company names)
-  private final static boolean DEBUG = false;
+  private final static boolean DEBUG = true;
 
   // Candidate company names to be normalized.
   private static Set<String> NORMAL_CANDIDATES = new HashSet<String>();
@@ -73,6 +73,7 @@ public class Grphin {
 
     timer = (System.currentTimeMillis() - timer) / 1000;
     System.out.println("Finished processing ~" + driver.getPeople().size() + " profiles!");
+    System.out.println("Companies Output: " + driver.getSize() + ".");
     System.out.println("Elapsed Time: " + timer + " seconds.");
 
   }
@@ -89,8 +90,15 @@ public class Grphin {
   // State Date format strings.
   private String[] formatStrings = { "yyyy-MM-dd", "yyyy" };
 
+  // Number of companies output.
+  private int size = 0;
+
   public Set<String> getPeople() {
     return people;
+  }
+
+  public int getSize() {
+    return size;
   }
 
   /**
@@ -211,17 +219,18 @@ public class Grphin {
     for (String companyName : nodes.keySet()) {
       Integer companySize = nodes.get(companyName).size();
       // Skip companies that have too few employees (uninteresting).
-      if (companySize > THRESHOLD) {
+      if (companySize >= THRESHOLD) {
         companyMap.put(companyName, new Company(companyName, companySize));
       }
     }
 
     // Build Incoming Edges
+    Set<String> refCompanies = new HashSet<String>();
     for (Edge e : edges.keySet()) {
       Company c = companyMap.get(e.destination);
       Integer edgeSize = edges.get(e).size();
       // Skip edges that have too few employees (uninteresting).
-      if (c != null && edgeSize > THRESHOLD) {
+      if (c != null && edgeSize >= THRESHOLD && companyMap.containsKey(e.source)) {
         if (DEBUG) {
           // Add normalization candidates as needed.
           if (e.destination.contains(e.source) || e.source.contains(e.destination)) {
@@ -235,12 +244,13 @@ public class Grphin {
           }
         }
         c.incomingEdges.put(e.source, edgeSize);
+        refCompanies.add(e.source);
       }
     }
 
     // Build Json
     for (Company c : companyMap.values()) {
-      if (c.incomingEdges.size() > 0) {
+      if (refCompanies.contains(c.name) || c.incomingEdges.size() > 0) {
         JsonObject companyJson = new JsonObject();
         companyJson.addProperty("company-name", c.name);
         JsonArray incoming = new JsonArray();
@@ -254,6 +264,8 @@ public class Grphin {
         toRet.add(companyJson);
       }
     }
+
+    size = toRet.size();
 
     return toRet.toString();
   }

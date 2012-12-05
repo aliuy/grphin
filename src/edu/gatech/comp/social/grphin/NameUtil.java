@@ -49,8 +49,12 @@ public class NameUtil {
       normalizedNames.put("EricssonMalaysia", "Ericsson");
       normalizedNames.put("EricssonNigeria", "Ericsson");
       normalizedNames.put("EtisalatNigeria", "Etisalat");
+      normalizedNames.put("GECapital", "GE");
+      normalizedNames.put("GEEnergy", "GE");
+      normalizedNames.put("GeneralElectric", "GE");
       normalizedNames.put("GlobacomLimited", "Globacom");
       normalizedNames.put("HCLTechnologiesLtd", "HCLTechnologies");
+      normalizedNames.put("HewlettPackard", "HP");
       normalizedNames.put("HoffmannLaRoche", "Roche");
       normalizedNames.put("HSBCBank", "HSBC");
       normalizedNames.put("IBMArgentina", "IBM");
@@ -89,14 +93,19 @@ public class NameUtil {
       normalizedNames.put("PatniComputerSystemsLtd", "PatniComputerSystems");
       normalizedNames.put("PfizerInc", "Pfizer");
       normalizedNames.put("PfizerPharmaceuticals", "Pfizer");
+      normalizedNames.put("PricewaterhouseCoopers", "PwC");
+      normalizedNames.put("PriceWaterhouseCoopers", "PwC");
+      normalizedNames.put("ProcterGamble", "PG");
       normalizedNames.put("PTBankCIMBNiagaTbk", "PTBankCIMBNiaga");
       normalizedNames.put("PTTelkomsel", "Telkomsel");
+      normalizedNames.put("PwCConsulting", "PwC");
       normalizedNames.put("RochePharmaceuticals", "Roche");
       normalizedNames.put("SafecoInsurance", "Safeco");
       normalizedNames.put("SAPLabs", "SAP");
       normalizedNames.put("SchlumbergerInformationSolutions", "Schlumberger");
       normalizedNames.put("SprintNextel", "Sprint");
       normalizedNames.put("StarbucksCoffeeCompany", "Starbucks");
+      normalizedNames.put("TataConsultancyServices", "TCS");
       normalizedNames.put("TechMahindraLtd", "TechMahindra");
       normalizedNames.put("TescoStoresLtd", "Tesco");
       normalizedNames.put("TheAmericanUniversityinCairo", "AmericanUniversityinCairo");
@@ -119,6 +128,7 @@ public class NameUtil {
       normalizedNames.put("ZainJordan", "Zain");
       normalizedNames.put("Zainjordan", "Zain");
       normalizedNames.put("ZainNigeria", "Zain");
+
     }
     name = name.replaceAll("[^a-zA-Z0-9]", "");
     if (normalizedNames.containsKey(name)) {
