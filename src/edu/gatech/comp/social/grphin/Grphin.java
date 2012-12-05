@@ -20,12 +20,12 @@ import com.google.gson.JsonParser;
 
 public class Grphin {
   // Change this to your dataset (can be a directory or individual file).
-  private final static String DATA = "C:\\Users\\andrew\\Desktop\\1339943811\\";
+  private final static String DATA = "C:\\Users\\Andrew\\Downloads\\grphin\\A\\1339943811_2\\";
   // Change this to your output file.
   private final static String OUTPUT = "C:\\Users\\andrew\\Desktop\\jsonOutput.json";
   // The minimum number of employees needed in order to output a company or
   // edge.
-  private final static int THRESHOLD = 5;
+  private final static int THRESHOLD = 10;
   // Debug Mode (1 = Suggest normalized company names)
   private final static boolean DEBUG = false;
 
@@ -200,7 +200,7 @@ public class Grphin {
             }
           }
         }
-        // System.out.println("Processed: " + myFile.getName());
+        System.out.println("Processed: " + myFile.getName());
       } else {
         // Invalid JSON
         System.out.println("Error: Invalid Json - " + myFile.getName());
@@ -212,7 +212,8 @@ public class Grphin {
 
   @Override
   public String toString() {
-    JsonArray toRet = new JsonArray();
+	JsonObject toRet = new JsonObject();
+    JsonArray companyArr = new JsonArray();
     Map<String, Company> companyMap = new HashMap<String, Company>();
 
     // Build Company Objects
@@ -252,23 +253,24 @@ public class Grphin {
     for (Company c : companyMap.values()) {
       if (refCompanies.contains(c.name) || c.incomingEdges.size() > 0) {
         JsonObject companyJson = new JsonObject();
-        companyJson.addProperty("company-name", c.name);
+        companyJson.addProperty("name", c.name);
         JsonArray incoming = new JsonArray();
         int totalIncoming = 0;
         for (String in : c.incomingEdges.keySet()) {
           JsonObject inCompany = new JsonObject();
-          inCompany.addProperty("in-company", in);
-          inCompany.addProperty("count", c.incomingEdges.get(in));
+          inCompany.addProperty("name", in);
+          inCompany.addProperty("size", c.incomingEdges.get(in));
           totalIncoming += c.incomingEdges.get(in).intValue();
           incoming.add(inCompany);
         }
-        companyJson.addProperty("strength", totalIncoming);
-        companyJson.add("incoming", incoming);
-        toRet.add(companyJson);
+        companyJson.addProperty("size", totalIncoming);
+        companyJson.add("children", incoming);
+        companyArr.add(companyJson);
       }
     }
-
-    size = toRet.size();
+    size = companyArr.size();
+    toRet.addProperty("name", "companies");
+    toRet.add("children", companyArr);
 
     return toRet.toString();
   }
