@@ -18,16 +18,21 @@ import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
 
+/**
+ * Parser for Grph.in
+ * 
+ * @author andrew
+ */
 public class Grphin {
   // Change this to your dataset (can be a directory or individual file).
-  private final static String DATA = "C:\\Users\\Andrew\\Downloads\\grphin\\A\\1339943811_2\\";
+  private final static String DATA = "E:\\linkedin_dataset\\A\\large\\";
   // Change this to your output file.
   private final static String OUTPUT = "C:\\Users\\andrew\\Desktop\\jsonOutput.json";
   // The minimum number of employees needed in order to output a company or
   // edge.
-  private final static int THRESHOLD = 10;
+  private final static int THRESHOLD = 15;
   // Debug Mode (1 = Suggest normalized company names)
-  private final static boolean DEBUG = false;
+  private final static boolean DEBUG = true;
 
   // Candidate company names to be normalized.
   private static Set<String> NORMAL_CANDIDATES = new HashSet<String>();
@@ -210,10 +215,12 @@ public class Grphin {
     }
   }
 
+  // For Andrew's Arbor visualization.
   @Override
   public String toString() {
-	JsonObject toRet = new JsonObject();
-    JsonArray companyArr = new JsonArray();
+    JsonObject toRet = new JsonObject();
+    JsonArray nodeArr = new JsonArray();
+    JsonArray edgeArr = new JsonArray();
     Map<String, Company> companyMap = new HashMap<String, Company>();
 
     // Build Company Objects
@@ -226,12 +233,12 @@ public class Grphin {
     }
 
     // Build Incoming Edges
-    Set<String> refCompanies = new HashSet<String>();
+    Set<String> relavantCompanies = new HashSet<String>();
     for (Edge e : edges.keySet()) {
-      Company c = companyMap.get(e.destination);
       Integer edgeSize = edges.get(e).size();
       // Skip edges that have too few employees (uninteresting).
-      if (c != null && edgeSize >= THRESHOLD && companyMap.containsKey(e.source)) {
+      if (edgeSize >= THRESHOLD && companyMap.get(e.destination) != null
+          && companyMap.containsKey(e.source)) {
         if (DEBUG) {
           // Add normalization candidates as needed.
           if (e.destination.contains(e.source) || e.source.contains(e.destination)) {
@@ -244,33 +251,29 @@ public class Grphin {
             }
           }
         }
-        c.incomingEdges.put(e.source, edgeSize);
-        refCompanies.add(e.source);
+        JsonObject eJson = new JsonObject();
+        eJson.addProperty("source", e.source);
+        eJson.addProperty("destination", e.destination);
+        eJson.addProperty("size", edgeSize);
+        edgeArr.add(eJson);
+
+        relavantCompanies.add(e.source);
+        relavantCompanies.add(e.destination);
       }
     }
 
     // Build Json
     for (Company c : companyMap.values()) {
-      if (refCompanies.contains(c.name) || c.incomingEdges.size() > 0) {
+      if (relavantCompanies.contains(c.name)) {
         JsonObject companyJson = new JsonObject();
         companyJson.addProperty("name", c.name);
-        JsonArray incoming = new JsonArray();
-        int totalIncoming = 0;
-        for (String in : c.incomingEdges.keySet()) {
-          JsonObject inCompany = new JsonObject();
-          inCompany.addProperty("name", in);
-          inCompany.addProperty("size", c.incomingEdges.get(in));
-          totalIncoming += c.incomingEdges.get(in).intValue();
-          incoming.add(inCompany);
-        }
-        companyJson.addProperty("size", totalIncoming);
-        companyJson.add("children", incoming);
-        companyArr.add(companyJson);
+        companyJson.addProperty("size", c.size);
+        nodeArr.add(companyJson);
       }
     }
-    size = companyArr.size();
-    toRet.addProperty("name", "companies");
-    toRet.add("children", companyArr);
+    size = nodeArr.size();
+    toRet.add("nodes", nodeArr);
+    toRet.add("edges", edgeArr);
 
     return toRet.toString();
   }

@@ -1,7 +1,6 @@
 package edu.gatech.comp.social.grphin;
 
 import java.util.Date;
-import java.util.HashMap;
 
 /**
  * Helper class for sorting companies by start date and outputing Json.
@@ -10,7 +9,7 @@ public class Company implements Comparable<Company> {
   public String name;
   public Date startDate;
   public Integer size;
-  public HashMap<String, Integer> incomingEdges;
+  // public HashMap<String, Integer> incomingEdges;
   public boolean sortBySize;
 
   public Company(String name, Date startDate) {
@@ -24,7 +23,7 @@ public class Company implements Comparable<Company> {
     super();
     this.name = name;
     this.size = size;
-    incomingEdges = new HashMap<String, Integer>();
+    // incomingEdges = new HashMap<String, Integer>();
     sortBySize = true;
   }
 
