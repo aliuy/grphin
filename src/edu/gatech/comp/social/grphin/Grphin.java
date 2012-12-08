@@ -25,7 +25,7 @@ import com.google.gson.JsonParser;
  */
 public class Grphin {
   // Change this to your dataset (can be a directory or individual file).
-  private final static String DATA = "E:\\linkedin_dataset\\Archives\\A\\1342291185\\";
+  private final static String DATA = "E:\\linkedin_dataset\\Extracted\\1343600993\\";
   // Change this to your output file.
   private final static String OUTPUT = "C:\\Users\\andrew\\Documents\\GitHub\\grphin\\www\\js\\jsonOutput.json";
   // The minimum number of employees needed in order to output a company or
