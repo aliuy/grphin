@@ -27,17 +27,17 @@ public class Grphin {
   // Change this to your dataset (can be a directory or individual file).
   private final static String DATA = "E:\\linkedin_dataset\\A\\large\\";
   // Change this to your output file.
-  private final static String OUTPUT = "C:\\Users\\andrew\\Desktop\\jsonOutput.json";
+  private final static String OUTPUT = "C:\\Users\\andrew\\Documents\\GitHub\\grphin\\www\\js\\jsonOutput.json";
   // The minimum number of employees needed in order to output a company or
   // edge.
-  private final static int THRESHOLD = 15;
+  private final static int THRESHOLD = 25;
   // Debug Mode (1 = Suggest normalized company names)
   private final static boolean DEBUG = true;
 
   // Candidate company names to be normalized.
   private static Set<String> NORMAL_CANDIDATES = new HashSet<String>();
   // The output file for normalized company name suggestions.
-  private final static String NORMAL_OUTPUT = "C:\\Users\\andrew\\Desktop\\normal.txt";
+  private final static String NORMAL_OUTPUT = "C:\\Users\\andrew\\Documents\\GitHub\\grphin\\src\\edu\\gatech\\comp\\social\\grphin\\normal.txt";
 
   /**
    * The Main Method
@@ -67,9 +67,27 @@ public class Grphin {
       // Output Normal File
       try {
         FileWriter out = new FileWriter(NORMAL_OUTPUT);
+        out.write("package edu.gatech.comp.social.grphin;\n");
+        out.write("import java.util.HashMap;\n");
+        out.write("import java.util.Map;\n");
+        out.write("public class NameUtil {\n");
+        out.write("  private static Map<String, String> normalizedNames;\n");
+        out.write("  public static String normalize(String name) {\n");
+        out.write("    if (normalizedNames == null) {\n");
+        out.write("      normalizedNames = new HashMap<String, String>();\n");
+
         for (String normal : NORMAL_CANDIDATES) {
           out.write(normal + "\n");
         }
+
+        out.write("    }\n");
+        out.write("    name = name.replaceAll(\"[^a-zA-Z0-9]\", \"\");\n");
+        out.write("    if (normalizedNames.containsKey(name)) {\n");
+        out.write("      name = normalizedNames.get(name);\n");
+        out.write("    }\n");
+        out.write("    return name;\n");
+        out.write("  }\n");
+        out.write("}\n");
         out.close();
       } catch (IOException e) {
         e.printStackTrace();

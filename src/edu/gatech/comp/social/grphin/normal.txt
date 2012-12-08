@@ -1,0 +1,18 @@
+package edu.gatech.comp.social.grphin;
+import java.util.HashMap;
+import java.util.Map;
+public class NameUtil {
+  private static Map<String, String> normalizedNames;
+  public static String normalize(String name) {
+    if (normalizedNames == null) {
+      normalizedNames = new HashMap<String, String>();
+normalizedNames.put("NokiaSiemensNetworks", "Nokia");
+normalizedNames.put("NokiaSiemensNetworks", "Siemens");
+    }
+    name = name.replaceAll("[^a-zA-Z0-9]", "");
+    if (normalizedNames.containsKey(name)) {
+      name = normalizedNames.get(name);
+    }
+    return name;
+  }
+}
