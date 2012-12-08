@@ -6,8 +6,6 @@ public class NameUtil {
   public static String normalize(String name) {
     if (normalizedNames == null) {
       normalizedNames = new HashMap<String, String>();
-normalizedNames.put("NokiaSiemensNetworks", "Nokia");
-normalizedNames.put("NokiaSiemensNetworks", "Siemens");
     }
     name = name.replaceAll("[^a-zA-Z0-9]", "");
     if (normalizedNames.containsKey(name)) {

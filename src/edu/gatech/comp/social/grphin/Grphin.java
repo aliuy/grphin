@@ -25,12 +25,12 @@ import com.google.gson.JsonParser;
  */
 public class Grphin {
   // Change this to your dataset (can be a directory or individual file).
-  private final static String DATA = "E:\\linkedin_dataset\\A\\large\\";
+  private final static String DATA = "E:\\linkedin_dataset\\Archives\\A\\1342291185\\";
   // Change this to your output file.
   private final static String OUTPUT = "C:\\Users\\andrew\\Documents\\GitHub\\grphin\\www\\js\\jsonOutput.json";
   // The minimum number of employees needed in order to output a company or
   // edge.
-  private final static int THRESHOLD = 25;
+  private final static int THRESHOLD = 15;
   // Debug Mode (1 = Suggest normalized company names)
   private final static boolean DEBUG = true;
 
@@ -135,7 +135,9 @@ public class Grphin {
         parse(file);
       }
     } else {
-      parseFile(filePath);
+      if (filePath.getName().endsWith(".json")) {
+        parseFile(filePath);
+      }
     }
   }
 
@@ -273,8 +275,17 @@ public class Grphin {
         eJson.addProperty("source", e.source);
         eJson.addProperty("destination", e.destination);
         eJson.addProperty("size", edgeSize);
-        edgeArr.add(eJson);
+        // Only add the greater edge between two nodes.
+        Edge ePrime = new Edge(e.destination, e.source);
+        if (edges.get(ePrime) == null) {
+          eJson.addProperty("reverseSize", 0);
+          edgeArr.add(eJson);
+        } else if (edges.get(ePrime).size() <= edgeSize) {
+          eJson.addProperty("reverseSize", edges.get(ePrime).size());
+          edgeArr.add(eJson);
+        }
 
+        // Whitelist both companies.
         relavantCompanies.add(e.source);
         relavantCompanies.add(e.destination);
       }
