@@ -49,6 +49,37 @@ var Renderer = function(canvas){
       ctx.fillRect(0,0, canvas.width, canvas.height);
       ctx.font = "12px Helvetica";
       
+      var nodeBoxes = {};
+      particleSystem.eachNode(function(node, pt){
+        // node: {mass:#, p:{x,y}, name:"", data:{}}
+        // pt:   {x:#, y:#}  node position in screen coords
+        
+        // determine the box size and round off the coords if we'll be 
+        // drawing a text label (awful alignment jitter otherwise...)
+        var label = node.name||"";
+        var w = ctx.measureText(""+label).width + 10;
+        if (!(""+label).match(/^[ \t]*$/)){
+          pt.x = Math.floor(pt.x);
+          pt.y = Math.floor(pt.y);
+        }else{
+          label = null;
+        }
+        
+        // draw the node
+        ctx.fillStyle = "blue";
+        gfx.rect(pt.x-w/2, pt.y-10, w,20, 4, {fill:ctx.fillStyle});
+        nodeBoxes[node.name] = [pt.x-w/2, pt.y-11, w, 22]
+
+        // draw the text
+        if (label){
+          ctx.textAlign = "center";
+          ctx.fillStyle = "white";
+          if (node.data.color=='none') ctx.fillStyle = '#333333';
+          ctx.fillText(label||"", pt.x, pt.y+4);
+          ctx.fillText(label||"", pt.x, pt.y+4);
+        }
+      });
+
       particleSystem.eachEdge(function(edge, pt1, pt2){
         // edge: {source:Node, target:Node, length:#, data:{}}
         // pt1:  {x:#, y:#}  source position in screen coords
@@ -57,6 +88,10 @@ var Renderer = function(canvas){
         var weight = edge.data.size;
         var color = "red";
 
+        // find the start point
+        var tail = intersect_line_box(pt1, pt2, nodeBoxes[edge.source.name]);
+        var head = intersect_line_box(tail, pt2, nodeBoxes[edge.target.name]);
+
         ctx.save() ;
         ctx.beginPath();
 
@@ -64,12 +99,12 @@ var Renderer = function(canvas){
         if (color) ctx.strokeStyle = color;
         // if (color) trace(color)
         ctx.fillStyle = null;
-      
-        ctx.moveTo(pt1.x, pt1.y);
-        ctx.lineTo(pt2.x, pt2.y);
+
+        ctx.moveTo(tail.x, tail.y);
+        ctx.lineTo(head.x, head.y);
         ctx.stroke();
         ctx.restore();
-        
+
         // draw an arrowpt2 if this is a -> style edge
         ctx.save()
         // move to the pt2 position of the edge we just drew
@@ -77,8 +112,8 @@ var Renderer = function(canvas){
         var arrowLength = 6 + wt;
         var arrowWidth = 2 + wt;
         ctx.fillStyle = (color) ? color : ctx.strokeStyle;
-        ctx.translate(pt2.x, pt2.y);
-        ctx.rotate(Math.atan2(pt2.y - pt1.y, pt2.x - pt1.x));
+        ctx.translate(head.x, head.y);
+        ctx.rotate(Math.atan2(head.y - tail.y, head.x - tail.x));
 
         // delete some of the edge that's already there (so the point isn't hidden)
         ctx.clearRect(-arrowLength/2,-wt/2, arrowLength/2,wt);
@@ -93,37 +128,6 @@ var Renderer = function(canvas){
         ctx.fill();
         ctx.restore()
       });
-
-      particleSystem.eachNode(function(node, pt){
-        // node: {mass:#, p:{x,y}, name:"", data:{}}
-        // pt:   {x:#, y:#}  node position in screen coords
-        
-        // determine the box size and round off the coords if we'll be 
-        // drawing a text label (awful alignment jitter otherwise...)
-        var label = node.name||"";
-        var w = ctx.measureText(""+label).width + 20;
-        if (!(""+label).match(/^[ \t]*$/)){
-          pt.x = Math.floor(pt.x);
-          pt.y = Math.floor(pt.y);
-        }else{
-          label = null;
-        }
-        
-        // draw the node
-        ctx.fillStyle = "blue";
-        gfx.rect(pt.x-w/2, pt.y-10, w,20, 4, {fill:ctx.fillStyle});
-
-        // draw the text
-        if (label){
-          ctx.textAlign = "center";
-          ctx.fillStyle = "white";
-          if (node.data.color=='none') ctx.fillStyle = '#333333';
-          ctx.fillText(label||"", pt.x, pt.y+4);
-          ctx.fillText(label||"", pt.x, pt.y+4);
-        }
-      });
-
-      
     },
     
     initMouseHandling:function(){
