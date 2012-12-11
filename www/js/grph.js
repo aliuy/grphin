@@ -1,11 +1,11 @@
 var sys;
-var tid;
   
 var Renderer = function(canvas){
   var canvas = $(canvas).get(0);
   var ctx = canvas.getContext('2d');
   var particleSystem;
-  var gfx = arbor.Graphics(canvas)
+  var gfx = arbor.Graphics(canvas);
+  var currNode;
 
   var intersect_line_line = function(p1, p2, p3, p4)
   {
@@ -16,7 +16,7 @@ var Renderer = function(canvas){
 
     if (ua < 0 || ua > 1 || ub < 0 || ub > 1)  return false
     return arbor.Point(p1.x + ua * (p2.x - p1.x), p1.y + ua * (p2.y - p1.y));
-  }
+  };
     
   var intersect_line_box = function(p1, p2, boxTuple)
   {
@@ -34,7 +34,7 @@ var Renderer = function(canvas){
            intersect_line_line(p1, p2, br, bl) ||
            intersect_line_line(p1, p2, bl, tl) ||
            false
-  }
+  };
     
   var that = {
     init:function(system){
@@ -66,7 +66,10 @@ var Renderer = function(canvas){
         }
         
         // draw the node
-        ctx.fillStyle = "blue";
+        ctx.fillStyle = "black";
+        if(currNode && currNode.name == node.name) {
+          ctx.fillStyle = "blue";
+        }
         gfx.rect(pt.x-w/2, pt.y-10, w,20, 4, {fill:ctx.fillStyle});
         nodeBoxes[node.name] = [pt.x-w/2, pt.y-11, w, 22]
 
@@ -86,7 +89,17 @@ var Renderer = function(canvas){
         // pt2:  {x:#, y:#}  target position in screen coords
 
         var weight = edge.data.size;
-        var color = "red";
+        var color = "black";
+        
+        if(currNode) {
+          if(currNode.name == edge.source.name) {
+            color = "green";
+          }
+          
+          if(currNode.name == edge.target.name) {
+            color = "red";
+          }
+        }
 
         // find the start point
         var tail = intersect_line_box(pt1, pt2, nodeBoxes[edge.source.name]);
@@ -145,6 +158,7 @@ var Renderer = function(canvas){
           if (dragged && dragged.node !== null){
             // while we're dragging, don't let physics move the node
             dragged.node.fixed = true;
+            currNode = dragged.node;
           }
 
           $(canvas).bind('mousemove', handler.dragged);
@@ -182,7 +196,7 @@ var Renderer = function(canvas){
     },
     
   }
-  return that
+  return that;
 }    
 
 $(document).ready(function(){

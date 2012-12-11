@@ -25,12 +25,12 @@ import com.google.gson.JsonParser;
  */
 public class Grphin {
   // Change this to your dataset (can be a directory or individual file).
-  private final static String DATA = "E:\\linkedin_dataset\\Extracted\\1343600993\\";
+  private final static String DATA = "E:\\linkedin_dataset\\Extracted\\";
   // Change this to your output file.
-  private final static String OUTPUT = "C:\\Users\\andrew\\Documents\\GitHub\\grphin\\www\\js\\jsonOutput.json";
+  private final static String OUTPUT = "C:\\Users\\andrew\\Documents\\GitHub\\grphin\\www\\js\\jsonOutput\\jsonOutput.json";
   // The minimum number of employees needed in order to output a company or
   // edge.
-  private final static int THRESHOLD = 15;
+  private static int THRESHOLD = 10;
   // Debug Mode (1 = Suggest normalized company names)
   private final static boolean DEBUG = true;
 
@@ -53,11 +53,20 @@ public class Grphin {
     // TODO: Add in database support for smarter filtering.
 
     // Output File
-    System.out.println("Outputting to " + OUTPUT);
     try {
-      FileWriter out = new FileWriter(OUTPUT);
-      out.write(driver.toString());
-      out.close();
+      for (int i = 5; i <= 50; i += 5) {
+        THRESHOLD = i;
+        System.out.println("Outputting to " + OUTPUT + "." + i);
+        FileWriter out = new FileWriter(OUTPUT + "." + i);
+        out.write(driver.toString());
+        out.close();
+
+        FileWriter stats = new FileWriter(OUTPUT + ".stats." + i);
+        stats.write("Finished processing ~" + driver.getPeople().size() + " profiles!\n");
+        stats.write("Companies Output: " + driver.getCompanySize() + ".\n");
+        stats.write("Edges Output: " + driver.getEdgeSize() + ".\n");
+        stats.close();
+      }
     } catch (IOException e) {
       e.printStackTrace();
     }
@@ -95,8 +104,6 @@ public class Grphin {
     }
 
     timer = (System.currentTimeMillis() - timer) / 1000;
-    System.out.println("Finished processing ~" + driver.getPeople().size() + " profiles!");
-    System.out.println("Companies Output: " + driver.getSize() + ".");
     System.out.println("Elapsed Time: " + timer + " seconds.");
 
   }
@@ -114,14 +121,19 @@ public class Grphin {
   private String[] formatStrings = { "yyyy-MM-dd", "yyyy" };
 
   // Number of companies output.
-  private int size = 0;
+  private int companySize = 0;
+  private int edgeSize = 0;
+
+  public int getCompanySize() {
+    return companySize;
+  }
+
+  public int getEdgeSize() {
+    return edgeSize;
+  }
 
   public Set<String> getPeople() {
     return people;
-  }
-
-  public int getSize() {
-    return size;
   }
 
   /**
@@ -225,7 +237,7 @@ public class Grphin {
             }
           }
         }
-        System.out.println("Processed: " + myFile.getName());
+        // System.out.println("Processed: " + myFile.getName());
       } else {
         // Invalid JSON
         System.out.println("Error: Invalid Json - " + myFile.getName());
@@ -261,7 +273,8 @@ public class Grphin {
           && companyMap.containsKey(e.source)) {
         if (DEBUG) {
           // Add normalization candidates as needed.
-          if (e.destination.contains(e.source) || e.source.contains(e.destination)) {
+          if (e.destination.toLowerCase().contains(e.source.toLowerCase())
+              || e.source.toLowerCase().contains(e.destination.toLowerCase())) {
             if (e.source.length() < e.destination.length()) {
               NORMAL_CANDIDATES.add("normalizedNames.put(\"" + e.destination + "\", \"" + e.source
                   + "\");");
@@ -274,14 +287,14 @@ public class Grphin {
         JsonObject eJson = new JsonObject();
         eJson.addProperty("source", e.source);
         eJson.addProperty("destination", e.destination);
-        eJson.addProperty("size", edgeSize);
+        eJson.addProperty("toSize", edgeSize);
         // Only add the greater edge between two nodes.
         Edge ePrime = new Edge(e.destination, e.source);
         if (edges.get(ePrime) == null) {
-          eJson.addProperty("reverseSize", 0);
+          eJson.addProperty("fromSize", 0);
           edgeArr.add(eJson);
         } else if (edges.get(ePrime).size() <= edgeSize) {
-          eJson.addProperty("reverseSize", edges.get(ePrime).size());
+          eJson.addProperty("fromSize", edges.get(ePrime).size());
           edgeArr.add(eJson);
         }
 
@@ -300,7 +313,8 @@ public class Grphin {
         nodeArr.add(companyJson);
       }
     }
-    size = nodeArr.size();
+    companySize = nodeArr.size();
+    edgeSize = edgeArr.size();
     toRet.add("nodes", nodeArr);
     toRet.add("edges", edgeArr);
 
