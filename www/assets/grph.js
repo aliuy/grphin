@@ -163,7 +163,7 @@ var Renderer = function(canvas){
             $('#panel').html(function() {
               var toRet = $('<div>').append($('<h1>').text(currNode.name).append($('<hr>')));
               if (currNode.data.size) {
-                toRet.append($('<b>').text('Size: ' + currNode.data.size)).append('<br>').append('<br>');
+                toRet.append($('<b>').text('# of LinkedIn Profiles: ' + currNode.data.size)).append('<br>').append('<br>');
               }
               toRet.append($('<b>').text('Employee Turnover:')).append('<br>');
               // Employee Turnover from getEdgesTo(currNode)
@@ -171,26 +171,20 @@ var Renderer = function(canvas){
                 toRet.append(
                   $('<span>')
                     .text(selectedEdge.source.name + ': ')
-                    .attr({
-                      style: 'color:green'
-                    })
+                    .attr({style: 'color:green'})
                   );
                 if (selectedEdge.data.toSize) {
                   toRet.append(
                     $('<span>')
                       .text('+' + selectedEdge.data.toSize + ' ')
-                      .attr({
-                        style: 'color:green'
-                      })
+                      .attr({style: 'color:green'})
                   );
                 }
                 if (selectedEdge.data.fromSize) {
                   toRet.append(
                     $('<span>')
                       .text('-' + selectedEdge.data.fromSize + ' ')
-                      .attr({
-                        style: 'color:red'
-                      })
+                      .attr({style: 'color:red'})
                   );
                 }
                 toRet.append($('<br>'));
@@ -200,26 +194,20 @@ var Renderer = function(canvas){
                 toRet.append(
                   $('<span>')
                     .text(selectedEdge.target.name + ': ')
-                    .attr({
-                      style: 'color:red'
-                    })
+                    .attr({style: 'color:red'})
                   );
                 if (selectedEdge.data.fromSize) {
                   toRet.append(
                     $('<span>')
                       .text('+' + selectedEdge.data.fromSize + ' ')
-                      .attr({
-                        style: 'color:green'
-                      })
+                      .attr({style: 'color:green'})
                   );
                 }
                 if (selectedEdge.data.toSize) {
                   toRet.append(
                     $('<span>')
                       .text('-' + selectedEdge.data.toSize + ' ')
-                      .attr({
-                        style: 'color:red'
-                      })
+                      .attr({style: 'color:red'})
                   );
                 }
                 toRet.append($('<br>'));
@@ -287,7 +275,7 @@ $(document).ready(function(){
   
   $.ajax({
     type: 'GET',
-    url: 'js/jsonOutput.json',
+    url: 'assets/jsonOutput.json',
     success: function(data){
       $.each(data.nodes, function(i, v){
         sys.addNode(v.name, {size:v.size});
