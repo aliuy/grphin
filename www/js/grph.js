@@ -93,11 +93,11 @@ var Renderer = function(canvas){
         
         if(currNode) {
           if(currNode.name == edge.source.name) {
-            color = "green";
+            color = "red";
           }
           
           if(currNode.name == edge.target.name) {
-            color = "red";
+            color = "green";
           }
         }
 
@@ -159,6 +159,74 @@ var Renderer = function(canvas){
             // while we're dragging, don't let physics move the node
             dragged.node.fixed = true;
             currNode = dragged.node;
+            
+            $('#panel').html(function() {
+              var toRet = $('<div>').append($('<h1>').text(currNode.name).append($('<hr>')));
+              if (currNode.data.size) {
+                toRet.append($('<b>').text('Size: ' + currNode.data.size)).append('<br>').append('<br>');
+              }
+              toRet.append($('<b>').text('Employee Turnover:')).append('<br>');
+              // Employee Turnover from getEdgesTo(currNode)
+              $.each(sys.getEdgesTo(currNode), function(i, selectedEdge) {
+                toRet.append(
+                  $('<span>')
+                    .text(selectedEdge.source.name + ': ')
+                    .attr({
+                      style: 'color:green'
+                    })
+                  );
+                if (selectedEdge.data.toSize) {
+                  toRet.append(
+                    $('<span>')
+                      .text('+' + selectedEdge.data.toSize + ' ')
+                      .attr({
+                        style: 'color:green'
+                      })
+                  );
+                }
+                if (selectedEdge.data.fromSize) {
+                  toRet.append(
+                    $('<span>')
+                      .text('-' + selectedEdge.data.fromSize + ' ')
+                      .attr({
+                        style: 'color:red'
+                      })
+                  );
+                }
+                toRet.append($('<br>'));
+              });
+              // Employee Turnover from getEdgesFrom(currNode)
+              $.each(sys.getEdgesFrom(currNode), function(i, selectedEdge) {
+                toRet.append(
+                  $('<span>')
+                    .text(selectedEdge.target.name + ': ')
+                    .attr({
+                      style: 'color:red'
+                    })
+                  );
+                if (selectedEdge.data.fromSize) {
+                  toRet.append(
+                    $('<span>')
+                      .text('+' + selectedEdge.data.fromSize + ' ')
+                      .attr({
+                        style: 'color:green'
+                      })
+                  );
+                }
+                if (selectedEdge.data.toSize) {
+                  toRet.append(
+                    $('<span>')
+                      .text('-' + selectedEdge.data.toSize + ' ')
+                      .attr({
+                        style: 'color:red'
+                      })
+                  );
+                }
+                toRet.append($('<br>'));
+              });
+              
+              return toRet;
+            });
           }
 
           $(canvas).bind('mousemove', handler.dragged);
@@ -201,8 +269,14 @@ var Renderer = function(canvas){
 
 $(document).ready(function(){
   var canvas = $('#viewport')[0];
-  canvas.width = window.innerWidth;
-  canvas.height = window.innerHeight;
+  canvas.width = $('#content')[0].clientWidth*0.85;
+  canvas.height = $('#content')[0].clientHeight;
+
+  $(window).resize(function() {
+    var canvas = $('#viewport')[0];
+    canvas.width = $('#content')[0].clientWidth*0.85;
+    canvas.height = $('#content')[0].clientHeight;
+  });
 
   // create the system with sensible repulsion/stiffness/friction
   sys = arbor.ParticleSystem(1000, 600, 0.5);
@@ -219,7 +293,7 @@ $(document).ready(function(){
         sys.addNode(v.name, {size:v.size});
       });
       $.each(data.edges, function(i, v){
-        sys.addEdge(v.source, v.destination, {size:v.size});
+        sys.addEdge(v.source, v.destination, {toSize:v.toSize, fromSize:v.fromSize});
       });
     },
     dataType: 'JSON'

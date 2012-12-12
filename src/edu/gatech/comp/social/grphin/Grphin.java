@@ -9,8 +9,10 @@ import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.LinkedList;
 import java.util.Map;
 import java.util.PriorityQueue;
+import java.util.Queue;
 import java.util.Set;
 
 import com.google.gson.JsonArray;
@@ -44,11 +46,21 @@ public class Grphin {
    */
   public static void main(String[] args) {
     Grphin driver = new Grphin();
-    long timer = System.currentTimeMillis();
+    long bigTimer = System.currentTimeMillis();
+    long smallTimer = System.currentTimeMillis();
 
     // Parse Input
     System.out.println("Processing " + DATA);
     driver.parse(new File(DATA));
+
+    System.out.println("Parsing Elapsed Time: "
+        + ((System.currentTimeMillis() - smallTimer) / 1000) + " seconds.");
+    smallTimer = System.currentTimeMillis();
+
+    // Statistics
+    int people = driver.getPeople().size();
+    int nodes = driver.getNodes().size();
+    int edges = driver.getEdges().size();
 
     // TODO: Add in database support for smarter filtering.
 
@@ -62,9 +74,11 @@ public class Grphin {
         out.close();
 
         FileWriter stats = new FileWriter(OUTPUT + ".stats." + i);
-        stats.write("Finished processing ~" + driver.getPeople().size() + " profiles!\n");
-        stats.write("Companies Output: " + driver.getCompanySize() + ".\n");
-        stats.write("Edges Output: " + driver.getEdgeSize() + ".\n");
+        stats.write("Finished processing " + people + " profiles!\n");
+        stats.write("Companies Found: " + nodes + " \n");
+        stats.write("Edges Found: " + edges + " \n");
+        stats.write("Companies Output: " + driver.getCompanySize() + "\n");
+        stats.write("Edges Output: " + driver.getEdgeSize() + "\n");
         stats.close();
       }
     } catch (IOException e) {
@@ -102,34 +116,46 @@ public class Grphin {
         e.printStackTrace();
       }
     }
-
-    timer = (System.currentTimeMillis() - timer) / 1000;
-    System.out.println("Elapsed Time: " + timer + " seconds.");
-
+    System.out.println("Output Elapsed Time: " + ((System.currentTimeMillis() - smallTimer) / 1000)
+        + " seconds.");
+    System.out.println("Total Elapsed Time: " + ((System.currentTimeMillis() - bigTimer) / 1000)
+        + " seconds.");
   }
 
   // Set<PersonId> people.
   private Set<String> people = new HashSet<String>();
 
   // Map<CompanyName, HashSet<PersonId>> companies.
-  private Map<String, HashSet<String>> nodes = new HashMap<String, HashSet<String>>();
+  private Map<String, Integer> nodes = new HashMap<String, Integer>();
 
   // Map<Edge, HashSet<PersonId>> edges.
-  private Map<Edge, HashSet<String>> edges = new HashMap<Edge, HashSet<String>>();
+  private Map<Edge, Integer> edges = new HashMap<Edge, Integer>();
+
+  // Map<CompanyName, HashSet<Edges>>.
+  private Map<String, HashSet<String>> nodeEdges = new HashMap<String, HashSet<String>>();
 
   // State Date format strings.
   private String[] formatStrings = { "yyyy-MM-dd", "yyyy" };
 
   // Number of companies output.
   private int companySize = 0;
+
   private int edgeSize = 0;
 
   public int getCompanySize() {
     return companySize;
   }
 
+  public Map<Edge, Integer> getEdges() {
+    return edges;
+  }
+
   public int getEdgeSize() {
     return edgeSize;
+  }
+
+  public Map<String, Integer> getNodes() {
+    return nodes;
   }
 
   public Set<String> getPeople() {
@@ -171,66 +197,84 @@ public class Grphin {
                 && jsonObj.get("public-profile-url").isJsonPrimitive()) {
               String employeeId = jsonObj.get("public-profile-url").getAsString();
 
-              // Add people to a HashSet for statistical purposes.
-              people.add(employeeId);
+              if (!people.contains(employeeId)) {
+                // Add people to a HashSet for statistical purposes.
+                people.add(employeeId);
 
-              // If Employee ID exists, check for positions.
-              PriorityQueue<Company> sortedCompanies = new PriorityQueue<Company>();
-              if (jsonObj.get("positions") != null && jsonObj.get("positions").isJsonArray()) {
-                for (JsonElement position : jsonObj.get("positions").getAsJsonArray()) {
-                  if (position.isJsonObject()) {
-                    JsonObject company = position.getAsJsonObject();
-                    if (company.get("company-name") != null
-                        && company.get("company-name").isJsonPrimitive()
-                        && company.get("start-date") != null
-                        && company.get("start-date").isJsonPrimitive()) {
-                      // Strip formatting to help normalize company names.
-                      String companyName = NameUtil.normalize(company.get("company-name")
-                          .getAsString());
-                      Date startDate = tryParse(company.get("start-date").getAsString());
-                      sortedCompanies.add(new Company(companyName, startDate));
+                // If Employee ID exists, check for positions.
+                PriorityQueue<Company> sortedCompanies = new PriorityQueue<Company>();
+                if (jsonObj.get("positions") != null && jsonObj.get("positions").isJsonArray()) {
+                  for (JsonElement position : jsonObj.get("positions").getAsJsonArray()) {
+                    if (position.isJsonObject()) {
+                      JsonObject company = position.getAsJsonObject();
+                      if (company.get("company-name") != null
+                          && company.get("company-name").isJsonPrimitive()
+                          && company.get("start-date") != null
+                          && company.get("start-date").isJsonPrimitive()) {
+                        // Strip formatting to help normalize company names.
+                        String companyName = NameUtil.normalize(company.get("company-name")
+                            .getAsString());
+                        Date startDate = tryParse(company.get("start-date").getAsString());
+                        sortedCompanies.add(new Company(companyName, startDate));
+                      }
+
                     }
-
                   }
                 }
-              }
 
-              if (sortedCompanies.size() > 0) {
-                Company c = sortedCompanies.poll();
-                // Add to employee to company map
-                HashSet<String> companyEmployees = nodes.get(c.name);
-                if (companyEmployees == null) {
-                  companyEmployees = new HashSet<String>();
-                }
-                companyEmployees.add(employeeId);
-                nodes.put(c.name, companyEmployees);
-
-                // Set oldCompany or newCompany?
-                Company oldC;
-                while (sortedCompanies.size() > 0) {
-                  oldC = c;
-                  c = sortedCompanies.poll();
-
+                if (sortedCompanies.size() > 0) {
+                  Company c = sortedCompanies.poll();
                   // Add to employee to company map
-                  companyEmployees = nodes.get(c.name);
+                  Integer companyEmployees = nodes.get(c.name);
                   if (companyEmployees == null) {
-                    companyEmployees = new HashSet<String>();
+                    companyEmployees = new Integer(0);
                   }
-                  companyEmployees.add(employeeId);
+                  companyEmployees++;
                   nodes.put(c.name, companyEmployees);
 
-                  // Skip if source == destination (most likely a promotion).
-                  if (!(oldC.equals(c)) && oldC.name.length() > 0 && c.name.length() > 0) {
-                    // Add to employee to edge map
-                    Edge key = new Edge();
-                    key.source = oldC.name;
-                    key.destination = c.name;
-                    HashSet<String> edgeEmployees = edges.get(key);
-                    if (edgeEmployees == null) {
-                      edgeEmployees = new HashSet<String>();
+                  // Set oldCompany or newCompany?
+                  Company oldC;
+                  while (sortedCompanies.size() > 0) {
+                    oldC = c;
+                    c = sortedCompanies.poll();
+
+                    // Add to employee to company map
+                    companyEmployees = nodes.get(c.name);
+                    if (companyEmployees == null) {
+                      companyEmployees = new Integer(0);
                     }
-                    edgeEmployees.add(employeeId);
-                    edges.put(key, edgeEmployees);
+                    companyEmployees++;
+                    nodes.put(c.name, companyEmployees);
+
+                    // Skip if source == destination (most likely a promotion).
+                    if (!(oldC.equals(c)) && oldC.name.length() > 0 && c.name.length() > 0) {
+                      // Add to employee to edge map
+                      Edge key = new Edge();
+                      key.source = oldC.name;
+                      key.destination = c.name;
+                      Integer edgeEmployees = edges.get(key);
+                      if (edgeEmployees == null) {
+                        edgeEmployees = new Integer(0);
+                      }
+                      edgeEmployees++;
+
+                      edges.put(key, edgeEmployees);
+
+                      HashSet<String> nEdges = nodeEdges.get(c.name);
+                      if (nEdges == null) {
+                        nEdges = new HashSet<String>();
+                      }
+                      nEdges.add(oldC.name);
+                      nodeEdges.put(c.name, nEdges);
+
+                      nEdges = nodeEdges.get(oldC.name);
+                      if (nEdges == null) {
+                        nEdges = new HashSet<String>();
+                      }
+                      nEdges.add(c.name);
+                      nodeEdges.put(oldC.name, nEdges);
+
+                    }
                   }
                 }
               }
@@ -247,30 +291,28 @@ public class Grphin {
     }
   }
 
+  public void setEdges(Map<Edge, Integer> edges) {
+    this.edges = edges;
+  }
+
+  public void setNodes(Map<String, Integer> nodes) {
+    this.nodes = nodes;
+  }
+
   // For Andrew's Arbor visualization.
   @Override
   public String toString() {
     JsonObject toRet = new JsonObject();
     JsonArray nodeArr = new JsonArray();
     JsonArray edgeArr = new JsonArray();
-    Map<String, Company> companyMap = new HashMap<String, Company>();
-
-    // Build Company Objects
-    for (String companyName : nodes.keySet()) {
-      Integer companySize = nodes.get(companyName).size();
-      // Skip companies that have too few employees (uninteresting).
-      if (companySize >= THRESHOLD) {
-        companyMap.put(companyName, new Company(companyName, companySize));
-      }
-    }
 
     // Build Incoming Edges
     Set<String> relavantCompanies = new HashSet<String>();
+    Set<JsonObject> relevantEdges = new HashSet<JsonObject>();
     for (Edge e : edges.keySet()) {
-      Integer edgeSize = edges.get(e).size();
+      Integer edgeSize = edges.get(e);
       // Skip edges that have too few employees (uninteresting).
-      if (edgeSize >= THRESHOLD && companyMap.get(e.destination) != null
-          && companyMap.containsKey(e.source)) {
+      if (edgeSize >= THRESHOLD && nodes.containsKey(e.destination) && nodes.containsKey(e.source)) {
         if (DEBUG) {
           // Add normalization candidates as needed.
           if (e.destination.toLowerCase().contains(e.source.toLowerCase())
@@ -292,10 +334,10 @@ public class Grphin {
         Edge ePrime = new Edge(e.destination, e.source);
         if (edges.get(ePrime) == null) {
           eJson.addProperty("fromSize", 0);
-          edgeArr.add(eJson);
-        } else if (edges.get(ePrime).size() <= edgeSize) {
-          eJson.addProperty("fromSize", edges.get(ePrime).size());
-          edgeArr.add(eJson);
+          relevantEdges.add(eJson);
+        } else if (edges.get(ePrime) <= edgeSize) {
+          eJson.addProperty("fromSize", edges.get(ePrime));
+          relevantEdges.add(eJson);
         }
 
         // Whitelist both companies.
@@ -304,13 +346,52 @@ public class Grphin {
       }
     }
 
+    // Filter on a single connected graph.
+    Set<String> filteredCompanies = new HashSet<String>();
+    Queue<String> q = new LinkedList<String>();
+    q.add("IBM");
+    while (!q.isEmpty()) {
+      String c = q.poll();
+      if (relavantCompanies.contains(c) && !filteredCompanies.contains(c)) {
+        filteredCompanies.add(c);
+        // System.out.println(c);
+        for (String e : nodeEdges.get(c)) {
+          if (relavantCompanies.contains(e) && !filteredCompanies.contains(e) && !q.contains(e)) {
+            Edge aKey = new Edge();
+            aKey.source = c;
+            aKey.destination = e;
+            Integer a = edges.get(aKey);
+            if (a == null) {
+              a = 0;
+            }
+            Edge bKey = new Edge();
+            bKey.source = e;
+            bKey.destination = c;
+            Integer b = edges.get(bKey);
+            if (b == null) {
+              b = 0;
+            }
+            if (Math.max(a, b) >= THRESHOLD) {
+              q.add(e);
+            }
+          }
+        }
+      }
+    }
+
     // Build Json
-    for (Company c : companyMap.values()) {
-      if (relavantCompanies.contains(c.name)) {
+    for (String c : nodes.keySet()) {
+      if (filteredCompanies.contains(c)) {
         JsonObject companyJson = new JsonObject();
-        companyJson.addProperty("name", c.name);
-        companyJson.addProperty("size", c.size);
+        companyJson.addProperty("name", c);
+        companyJson.addProperty("size", nodes.get(c));
         nodeArr.add(companyJson);
+      }
+    }
+    for (JsonObject e : relevantEdges) {
+      if (filteredCompanies.contains(e.get("source").getAsString())
+          && filteredCompanies.contains(e.get("destination").getAsString())) {
+        edgeArr.add(e);
       }
     }
     companySize = nodeArr.size();
