@@ -267,7 +267,7 @@ $(document).ready(function(){
   });
 
   // create the system with sensible repulsion/stiffness/friction
-  sys = arbor.ParticleSystem(1000, 600, 0.5);
+  sys = arbor.ParticleSystem(2000, 600, 0.8);
   // use center-gravity to make the graph settle nicely (ymmv)
   sys.parameters({gravity:true});
   // our newly created renderer will have its .init() method called shortly by sys...
