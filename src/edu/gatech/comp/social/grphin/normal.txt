@@ -6,37 +6,30 @@ public class NameUtil {
   public static String normalize(String name) {
     if (normalizedNames == null) {
       normalizedNames = new HashMap<String, String>();
+normalizedNames.put("ABNAMROMeesPierson", "ABNAMRO");
 normalizedNames.put("SelfEmployed", "Self");
-normalizedNames.put("StanleyBlackDeckerInc", "BlackDecker");
 normalizedNames.put("FujitsuSiemensComputers", "Fujitsu");
 normalizedNames.put("GeneralMotors", "GE");
-normalizedNames.put("RioTintoAlcan", "Alcan");
-normalizedNames.put("SelfEmployed", "Selfemployed");
 normalizedNames.put("GenworthFinancial", "GE");
+normalizedNames.put("SelfEmployed", "Selfemployed");
 normalizedNames.put("AstraZeneca", "Astra");
-normalizedNames.put("BoschRexroth", "Bosch");
 normalizedNames.put("Freelance", "freelance");
-normalizedNames.put("PTEricssonIndonesia", "Ericsson");
+normalizedNames.put("AonRiskSolutions", "Aon");
 normalizedNames.put("Belastingdienst", "ING");
 normalizedNames.put("PSAPeugeotCitron", "GE");
-normalizedNames.put("SiemensNetworks", "NSN");
 normalizedNames.put("FujitsuSiemensComputers", "Siemens");
 normalizedNames.put("ReedElsevier", "Elsevier");
 normalizedNames.put("CapGemini", "GE");
 normalizedNames.put("Selfemployed", "SelfEmployed");
 normalizedNames.put("Freelancer", "Freelance");
-normalizedNames.put("BhartiAirtelLtd", "Airtel");
-normalizedNames.put("ValeoService", "Valeo");
 normalizedNames.put("freelance", "Freelance");
 normalizedNames.put("Genpact", "GE");
 normalizedNames.put("STEricsson", "Ericsson");
 normalizedNames.put("AirtelVodafone", "Vodafone");
 normalizedNames.put("selfemployed", "SelfEmployed");
-normalizedNames.put("TDBank", "TD");
 normalizedNames.put("Selfemployed", "selfemployed");
 normalizedNames.put("ArthurAndersen", "Andersen");
-normalizedNames.put("CVSCaremark", "CVS");
-normalizedNames.put("BruneiShellPetroleum", "Shell");
+normalizedNames.put("StanleyBlackDecker", "BlackDecker");
 normalizedNames.put("VictoriasSecret", "Victorias");
     }
     name = name.replaceAll("[^a-zA-Z0-9]", "");

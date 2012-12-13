@@ -29,7 +29,7 @@ public class Grphin {
   // Change this to your dataset (can be a directory or individual file).
   private final static String DATA = "E:\\linkedin_dataset\\Extracted\\";
   // Change this to your output file.
-  private final static String OUTPUT = "C:\\Users\\andrew\\Documents\\GitHub\\grphin\\www\\js\\jsonOutput\\jsonOutput.json";
+  private final static String OUTPUT = "C:\\Users\\andrew\\Documents\\GitHub\\grphin\\www\\assets\\jsonOutput\\jsonOutput.json";
   // The minimum number of employees needed in order to output a company or
   // edge.
   private static int THRESHOLD = 10;
@@ -41,6 +41,8 @@ public class Grphin {
   // The output file for normalized company name suggestions.
   private final static String NORMAL_OUTPUT = "C:\\Users\\andrew\\Documents\\GitHub\\grphin\\src\\edu\\gatech\\comp\\social\\grphin\\normal.txt";
 
+  private final static HashSet<String> WHITELIST = new HashSet<String>();
+
   /**
    * The Main Method
    */
@@ -48,6 +50,22 @@ public class Grphin {
     Grphin driver = new Grphin();
     long bigTimer = System.currentTimeMillis();
     long smallTimer = System.currentTimeMillis();
+
+    // Hard Code Whitelist for Now...
+    WHITELIST.add("Google");
+    WHITELIST.add("Facebook");
+    WHITELIST.add("Amazon");
+    WHITELIST.add("LinkedIn");
+    WHITELIST.add("Yahoo");
+    WHITELIST.add("Apple");
+    WHITELIST.add("Microsoft");
+    // WHITELIST.add("Oracle");
+    // WHITELIST.add("SAP");
+    // WHITELIST.add("VMware");
+    // WHITELIST.add("Adobe");
+    // WHITELIST.add("Dell");
+    // WHITELIST.add("Intel");
+    // WHITELIST.add("IBM");
 
     // Parse Input
     System.out.println("Processing " + DATA);
@@ -66,7 +84,7 @@ public class Grphin {
 
     // Output File
     try {
-      for (int i = 5; i <= 50; i += 5) {
+      for (int i = 10; i <= 50; i += 5) {
         THRESHOLD = i;
         System.out.println("Outputting to " + OUTPUT + "." + i);
         FileWriter out = new FileWriter(OUTPUT + "." + i);
@@ -116,6 +134,7 @@ public class Grphin {
         e.printStackTrace();
       }
     }
+    System.out.println("Root node (largest company):" + driver.getLargestCompany());
     System.out.println("Output Elapsed Time: " + ((System.currentTimeMillis() - smallTimer) / 1000)
         + " seconds.");
     System.out.println("Total Elapsed Time: " + ((System.currentTimeMillis() - bigTimer) / 1000)
@@ -139,8 +158,9 @@ public class Grphin {
 
   // Number of companies output.
   private int companySize = 0;
-
   private int edgeSize = 0;
+
+  private String largestCompany = null;
 
   public int getCompanySize() {
     return companySize;
@@ -152,6 +172,19 @@ public class Grphin {
 
   public int getEdgeSize() {
     return edgeSize;
+  }
+
+  public String getLargestCompany() {
+    if (largestCompany == null || largestCompany.isEmpty()) {
+      int largestSize = 0;
+      for (String company : nodes.keySet()) {
+        if (nodes.get(company) > largestSize) {
+          largestSize = nodes.get(company);
+          largestCompany = company;
+        }
+      }
+    }
+    return largestCompany;
   }
 
   public Map<String, Integer> getNodes() {
@@ -209,6 +242,7 @@ public class Grphin {
                       JsonObject company = position.getAsJsonObject();
                       if (company.get("company-name") != null
                           && company.get("company-name").isJsonPrimitive()
+                          && !company.get("company-name").getAsString().isEmpty()
                           && company.get("start-date") != null
                           && company.get("start-date").isJsonPrimitive()) {
                         // Strip formatting to help normalize company names.
@@ -217,7 +251,6 @@ public class Grphin {
                         Date startDate = tryParse(company.get("start-date").getAsString());
                         sortedCompanies.add(new Company(companyName, startDate));
                       }
-
                     }
                   }
                 }
@@ -307,12 +340,19 @@ public class Grphin {
     JsonArray edgeArr = new JsonArray();
 
     // Build Incoming Edges
-    Set<String> relavantCompanies = new HashSet<String>();
+    Set<String> relevantCompanies = new HashSet<String>();
     Set<JsonObject> relevantEdges = new HashSet<JsonObject>();
+
+    // Add WHITELIST to relevant companies.
+    relevantCompanies.addAll(WHITELIST);
+
     for (Edge e : edges.keySet()) {
       Integer edgeSize = edges.get(e);
       // Skip edges that have too few employees (uninteresting).
-      if (edgeSize >= THRESHOLD && nodes.containsKey(e.destination) && nodes.containsKey(e.source)) {
+      if (nodes.containsKey(e.destination)
+          && nodes.containsKey(e.source)
+          && (edgeSize >= THRESHOLD / 2 || (edgeSize > 1 && WHITELIST.contains(e.destination) && WHITELIST
+              .contains(e.source)))) {
         if (DEBUG) {
           // Add normalization candidates as needed.
           if (e.destination.toLowerCase().contains(e.source.toLowerCase())
@@ -329,34 +369,37 @@ public class Grphin {
         JsonObject eJson = new JsonObject();
         eJson.addProperty("source", e.source);
         eJson.addProperty("destination", e.destination);
-        eJson.addProperty("toSize", edgeSize);
+        eJson.addProperty("toSize", edges.get(e));
         // Only add the greater edge between two nodes.
         Edge ePrime = new Edge(e.destination, e.source);
         if (edges.get(ePrime) == null) {
           eJson.addProperty("fromSize", 0);
           relevantEdges.add(eJson);
-        } else if (edges.get(ePrime) <= edgeSize) {
+        } else if (edges.get(ePrime) <= edges.get(e)) {
           eJson.addProperty("fromSize", edges.get(ePrime));
           relevantEdges.add(eJson);
         }
 
         // Whitelist both companies.
-        relavantCompanies.add(e.source);
-        relavantCompanies.add(e.destination);
+        relevantCompanies.add(e.source);
+        relevantCompanies.add(e.destination);
       }
     }
+
+    // Get the largest company
+    largestCompany = getLargestCompany();
 
     // Filter on a single connected graph.
     Set<String> filteredCompanies = new HashSet<String>();
     Queue<String> q = new LinkedList<String>();
-    q.add("IBM");
+    q.add(largestCompany);
     while (!q.isEmpty()) {
       String c = q.poll();
-      if (relavantCompanies.contains(c) && !filteredCompanies.contains(c)) {
+      if (relevantCompanies.contains(c) && !filteredCompanies.contains(c)) {
         filteredCompanies.add(c);
         // System.out.println(c);
         for (String e : nodeEdges.get(c)) {
-          if (relavantCompanies.contains(e) && !filteredCompanies.contains(e) && !q.contains(e)) {
+          if (relevantCompanies.contains(e) && !filteredCompanies.contains(e) && !q.contains(e)) {
             Edge aKey = new Edge();
             aKey.source = c;
             aKey.destination = e;
@@ -371,7 +414,7 @@ public class Grphin {
             if (b == null) {
               b = 0;
             }
-            if (Math.max(a, b) >= THRESHOLD) {
+            if (a + b >= THRESHOLD || WHITELIST.contains(e)) {
               q.add(e);
             }
           }
@@ -380,13 +423,11 @@ public class Grphin {
     }
 
     // Build Json
-    for (String c : nodes.keySet()) {
-      if (filteredCompanies.contains(c)) {
-        JsonObject companyJson = new JsonObject();
-        companyJson.addProperty("name", c);
-        companyJson.addProperty("size", nodes.get(c));
-        nodeArr.add(companyJson);
-      }
+    for (String c : filteredCompanies) {
+      JsonObject companyJson = new JsonObject();
+      companyJson.addProperty("name", c);
+      companyJson.addProperty("size", nodes.get(c));
+      nodeArr.add(companyJson);
     }
     for (JsonObject e : relevantEdges) {
       if (filteredCompanies.contains(e.get("source").getAsString())

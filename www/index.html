@@ -19,9 +19,9 @@
           </ul>
           <b>About the Data:</b><br/><br/>
           We parsed 7,207,357 LinkedIn public profiles - which resulted in a graph containing 3,215,402 nodes and 3,574,637 unique edges.<br/><br/>
-          Next we filter out “uninteresting” nodes and edges by setting a threshold. In this case, nodes and edges that appeared in <25 profiles are discarded. The result is a disconnected graph with isolated groups of nodes and edges.<br/><br/>
-          Next, we attempt to build a single connected graph, by running breadth-first-search on an arbitrary node in the original graph. We chose to use IBM as our root node.<br/><br/>
-          The resulting graph has 54 companies, along with 102 unique edges.<br/><br/>
+          Next we filter out “uninteresting” nodes and edges by setting a threshold. In this case, nodes and edges that appeared in <40 profiles are discarded (with a few whitelisted exemptions). The result is a disconnected graph with isolated groups of nodes and edges.<br/><br/>
+          Next, we build a single connected graph, by running breadth-first-search from the single largest company node (IBM) in the original graph.<br/><br/>
+          The resulting graph has 51 companies, along with 121 unique edges.<br/><br/>
         </div>
         <div id='content'>
           <canvas id='viewport'></canvas>

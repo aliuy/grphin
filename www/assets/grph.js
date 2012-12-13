@@ -168,11 +168,19 @@ var Renderer = function(canvas){
               toRet.append($('<b>').text('Employee Turnover:')).append('<br>');
               // Employee Turnover from getEdgesTo(currNode)
               $.each(sys.getEdgesTo(currNode), function(i, selectedEdge) {
-                toRet.append(
-                  $('<span>')
-                    .text(selectedEdge.source.name + ': ')
-                    .attr({style: 'color:green'})
-                  );
+                if (!selectedEdge.data.toSize || !selectedEdge.data.fromSize || selectedEdge.data.toSize != selectedEdge.data.fromSize) {
+                  toRet.append(
+                    $('<span>')
+                      .text(selectedEdge.source.name + ': ')
+                      .attr({style: 'color:green'})
+                    );
+                } else {
+                  toRet.append(
+                    $('<span>')
+                      .text(selectedEdge.source.name + ': ')
+                      .attr({style: 'color:black'})
+                    );
+                }
                 if (selectedEdge.data.toSize) {
                   toRet.append(
                     $('<span>')
@@ -191,26 +199,28 @@ var Renderer = function(canvas){
               });
               // Employee Turnover from getEdgesFrom(currNode)
               $.each(sys.getEdgesFrom(currNode), function(i, selectedEdge) {
-                toRet.append(
-                  $('<span>')
-                    .text(selectedEdge.target.name + ': ')
-                    .attr({style: 'color:red'})
-                  );
-                if (selectedEdge.data.fromSize) {
+                if (!selectedEdge.data.toSize || !selectedEdge.data.fromSize || selectedEdge.data.toSize != selectedEdge.data.fromSize) {
                   toRet.append(
                     $('<span>')
-                      .text('+' + selectedEdge.data.fromSize + ' ')
-                      .attr({style: 'color:green'})
-                  );
-                }
-                if (selectedEdge.data.toSize) {
-                  toRet.append(
-                    $('<span>')
-                      .text('-' + selectedEdge.data.toSize + ' ')
+                      .text(selectedEdge.target.name + ': ')
                       .attr({style: 'color:red'})
-                  );
+                    );
+                  if (selectedEdge.data.fromSize) {
+                    toRet.append(
+                      $('<span>')
+                        .text('+' + selectedEdge.data.fromSize + ' ')
+                        .attr({style: 'color:green'})
+                    );
+                  }
+                  if (selectedEdge.data.toSize) {
+                    toRet.append(
+                      $('<span>')
+                        .text('-' + selectedEdge.data.toSize + ' ')
+                        .attr({style: 'color:red'})
+                    );
+                  }
+                  toRet.append($('<br>'));
                 }
-                toRet.append($('<br>'));
               });
               
               return toRet;
